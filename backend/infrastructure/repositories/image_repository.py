@@ -77,17 +77,10 @@ class ImageRepository():
         if not image_obj:
             logger.warning("delete_image(id=%s) [Not found]", image_id)
             raise RepositoryError("not_found")
-        moved = False
-        is_commited = False
+
         try:
-            # 1. Delete the file (errors will be captured)
-            self.image_store.move_to_trash(image_obj.file_path)
-            moved = True 
-            
-            # 2. Delete record in the database
-            self.session.delete(image_obj)
+            image_obj.state = False
             self.session.commit()
-            is_commited = True
 
             logger.info("delete_image(id=%s) [Success]", image_id)
 
@@ -104,10 +97,7 @@ class ImageRepository():
             self.session.rollback()
             logger.exception("delete_image(id=%s) [Unexpected error]", image_id)
             raise RepositoryError("unexpected_error") from e
-        
-        finally:
-            if not is_commited and moved:
-                self.image_store.restore_from_trash(image_obj.file_path)
+
 
 
     def update(self, image: Image) -> None:
@@ -137,20 +127,13 @@ class ImageRepository():
         if not image_ids:
             return
 
-        moved_files = [] 
-        is_commited = False
+        #....
         
         try:
-            stmt_select = select(models.ImageModel.file_path).where(models.ImageModel.id.in_(image_ids))
-            file_paths = self.session.execute(stmt_select).scalars().all()
-            moved_files = self.image_store.move_to_trash_many(file_paths)
-            stmt_delete = delete(models.ImageModel).where(models.ImageModel.id.in_(image_ids))
-            self.session.execute(stmt_delete)
 
             self.session.commit()
-            is_commited = True
             
-            logger.info("delete_many_images(ids=%s) [Success] - %d files moved to trash", image_ids, len(moved_files))
+            logger.info("delete_many_images(ids=%s) [Success]")
 
         except ImageStorageError as e:
             logger.exception("delete_many_images(ids=%s) [StorageError]: %s", image_ids, e)
@@ -164,9 +147,7 @@ class ImageRepository():
             self.session.rollback()
             logger.exception("delete_many_notes [Unexpected error]")
             raise RepositoryError("unexpected_error") from e
-        finally:
-            if not is_commited and moved_files:
-                self.image_store.restore_many_from_trash([f for sublist in moved_files for f in sublist])
+
         
     # --- QUERIES ---
     def get_by_id(self, image_id: int) -> Image | None:

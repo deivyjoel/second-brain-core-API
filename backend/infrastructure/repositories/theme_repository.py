@@ -53,8 +53,9 @@ class ThemeRepository():
         if not theme_obj:
             logger.warning("delete_theme(id=%s) [Not Found]", theme_id)
             raise RepositoryError("not_found")
+        theme_obj.state = False
+
         try:
-            self.session.delete(theme_obj)
             self.session.commit()
             logger.info("delete_theme(id=%s) [Success]", theme_id)
         except SQLAlchemyError as e:

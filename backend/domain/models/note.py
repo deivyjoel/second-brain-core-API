@@ -40,6 +40,7 @@ class Note:
     @staticmethod
     def create(
         name: str,
+        user_id: int,
         sibling_names: set[str],
         theme_id: int | None = None,
     ) -> NewNoteDTO:
@@ -54,6 +55,7 @@ class Note:
 
         return NewNoteDTO(
             name=name,
+            user_id=user_id,
             theme_id=theme_id
         ) # RETURN DTO
 

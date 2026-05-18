@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
 
-"""Every time we create a datetime for created_at or last_edited_at, we use this function to ensure it's in UTC."""
+"""Cada vez que creamos una fecha y hora para create_at o last_edited_at, usamos esta función para asegurarnos de que esté en UTC"""
 def get_utc_now():
     return datetime.now(timezone.utc)

@@ -10,6 +10,7 @@ from backend.application.decorators.validator_types import validate_types
 from backend.domain.errors.note_errors import NoteDomainError
 from backend.domain.errors.theme_errors import ThemeDomainError
 from backend.domain.errors.image_errors import ImageDomainError
+from backend.domain.errors.user_errors import UserDomainError
 
 
 
@@ -36,6 +37,9 @@ def handle_usecase_errors(f):
             return OperationResult(False, str(e), None)
         
         except ImageDomainError as e:
+            return OperationResult(False, str(e), None)
+        
+        except UserDomainError as e:
             return OperationResult(False, str(e), None)
         
         except DBError:

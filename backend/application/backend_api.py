@@ -1,5 +1,6 @@
 from backend.infrastructure.repositories.image_repository import ImageRepository
 from backend.infrastructure.repositories.note_repository import NoteRepository
+from backend.infrastructure.repositories.user_repository import UserRepository
 from backend.infrastructure.repositories.theme_repository import ThemeRepository
 from backend.infrastructure.repositories.analytics_repository import AnalyticsRepository
 from backend.infrastructure.repositories.search_efficiency_repository import SearchEfficiencyRepository
@@ -22,10 +23,15 @@ from backend.application.use_cases.image_use_cases import (
     list_images_by_theme, rename_image, move_image_to_theme, get_unique_image_name, delete_many_images,
     list_images_without_theme, get_image_extension, get_image_ids_by_theme_hierarchy
 )
+
+from backend.application.use_cases.user_use_cases import (
+    login_user, register_user
+)
 from backend.application.services.image_services import ImageService
 from backend.application.services.analyzer_services import AnalyzerService
 from backend.application.services.note_services import NoteService
 from backend.application.services.theme_services import ThemeService
+from backend.application.services.user_services import UserService
 
 class BackendAPI:
     """
@@ -35,25 +41,35 @@ class BackendAPI:
 
     def __init__(self, note_repo: NoteRepository, 
                 theme_repo: ThemeRepository,
+                user_repo: UserRepository,
                 analy_repo: AnalyticsRepository,
                 search_repo: SearchEfficiencyRepository,
                 image_repo: ImageRepository):
         # Repositories
         self._note_repo = note_repo
         self._theme_repo = theme_repo
+        self._user_repo = user_repo
         self._analy_repo = analy_repo
         self._search_repo = search_repo
         self._image_repo = image_repo
 
         # Services
         self._analyzer_service = AnalyzerService()
+        self._user_service = UserService(self._user_repo)
         self._note_service = NoteService(self._note_repo)
         self._theme_service = ThemeService(self._theme_repo)
         self._image_service = ImageService(self._image_repo)
 
+    # --- User opetations ---
+    def login_user(self, email: str, password: str):
+        return login_user(self._user_repo, email, password, self._user_service)
+    
+    def register_user(self, name: str, email: str, password: str):
+        return register_user(self._user_repo, name, email, password, self._user_service)
+    
     # --- Note operations ---
-    def create_note(self, name: str, theme_id: int | None = None):
-        return create_note(self._note_repo, self._note_service, name, theme_id)
+    def create_note(self, name: str, user_id: int, theme_id: int | None = None):
+        return create_note(self._note_repo, user_id, self._note_service, name, theme_id)
 
     def delete_note(self, note_id: int):
         return delete_note(self._note_repo, note_id)
@@ -92,8 +108,8 @@ class BackendAPI:
         return get_note_ids_by_theme_hierarchy(theme_id, self._search_repo)
 
     # --- Theme operations ---
-    def create_theme(self, name: str, parent_id: int | None = None):
-        return create_theme(self._theme_repo, self._theme_service, name, parent_id)
+    def create_theme(self, name: str, user_id: int, parent_id: int | None = None):
+        return create_theme(self._theme_repo, self._theme_service, name, user_id, parent_id)
 
     def delete_theme(self, theme_id: int):
         return delete_theme(self._theme_repo, theme_id)
@@ -136,8 +152,8 @@ class BackendAPI:
         return get_themes_descendants(theme_id, self._search_repo)
     
 # --- Image operations ---
-    def create_image(self, name: str, blob_data: bytes, extension: str, theme_id: int | None = None):
-        return create_image(self._image_repo, self._image_service, name, blob_data, extension, theme_id)
+    def create_image(self, name: str, user_id: int, blob_data: bytes, extension: str, theme_id: int | None = None):
+        return create_image(self._image_repo, self._image_service, user_id, name, blob_data, extension, theme_id)
 
     def delete_image(self, image_id: int):
         return delete_image(self._image_repo, image_id)

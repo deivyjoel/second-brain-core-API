@@ -20,11 +20,12 @@ from backend.domain.dto.new_note_dto import NewNoteDTO
 # --- OPERATIONS ---
 @handle_usecase_errors
 def create_note(note_repo: NoteRepository, 
+                user_id: int,
                 note_services: NoteService,
                 name: str, theme_id: int | None = None
                 ) -> OperationResult[int]:
     sibling_names = note_services.get_names_in_theme_id(theme_id)
-    note: NewNoteDTO = Note.create(name, set(sibling_names), theme_id)
+    note: NewNoteDTO = Note.create(name, user_id, set(sibling_names), theme_id)
     note_id = note_repo.add(note)
     return OperationResult(True, "Nota creada exitosamente", note_id)
 

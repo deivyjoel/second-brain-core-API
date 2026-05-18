@@ -22,10 +22,11 @@ def create_theme(
     theme_repo: ThemeRepository,
     theme_service: ThemeService,
     name: str, 
+    user_id: int,
     parent_id: int | None = None
     ) -> OperationResult[int]:    
     sibling_names = theme_service.get_names_in_theme_id(parent_id)
-    theme = Theme.create(name, sibling_names=set(sibling_names), parent_id=parent_id)
+    theme = Theme.create(name, user_id, sibling_names=set(sibling_names), parent_id=parent_id)
     id_theme = theme_repo.add(theme)
             
     return OperationResult(True, "Tema creado exitosamente", id_theme)

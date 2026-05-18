@@ -17,13 +17,14 @@ from backend.domain.dto.new_image_dto import NewImageDTO
 @handle_usecase_errors
 def create_image(image_repo: ImageRepository, 
                  image_services: ImageService,
+                 user_id: int,
                  name: str, 
                  blob_data: bytes,
                  extension: str,
                  theme_id: int | None = None
                  ) -> OperationResult[int]:
     sibling_names = image_services.get_names_in_theme_id(theme_id)
-    image_dto: NewImageDTO = Image.create(name, blob_data, set(sibling_names), extension, theme_id)
+    image_dto: NewImageDTO = Image.create(name, user_id, blob_data, set(sibling_names), extension, theme_id)
     image_id = image_repo.add(image_dto)
     
     return OperationResult(True, "Imagen guardada exitosamente", image_id)

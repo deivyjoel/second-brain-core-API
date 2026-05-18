@@ -4,6 +4,7 @@ from dataclasses import dataclass
 class NewThemeDTO:
     """DTO for transporting new theme data to the repository."""
     name: str
+    user_id: int
     parent_id: int | None
 
 

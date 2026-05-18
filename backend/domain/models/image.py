@@ -28,6 +28,7 @@ class Image:
     @staticmethod
     def create(
         name: str,
+        user_id: int,
         blob_data: bytes,
         sibling_names: set[str],
         extension: str,
@@ -47,6 +48,7 @@ class Image:
 
         return NewImageDTO(
             name=clean_name,
+            user_id=user_id,
             blob_data=blob_data,
             extension=extension_clean,
             theme_id=theme_id

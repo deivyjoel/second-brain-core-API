@@ -31,6 +31,7 @@ class Theme:
     @staticmethod
     def create(
         name: str,
+        user_id,
         sibling_names: set[str],
         parent_id: int | None = None,
     ) -> NewThemeDTO:
@@ -45,6 +46,7 @@ class Theme:
 
         return NewThemeDTO(
             name=name,
+            user_id=user_id,
             parent_id=parent_id
         ) #RETURN DTO
 

@@ -68,8 +68,9 @@ class NoteRepository():
         if not note_obj:
             logger.warning("delete_note(id=%s) [Not found]", note_id)
             raise RepositoryError("not_found")
+        note_obj.state = False
+
         try:
-            self.session.delete(note_obj)
             self.session.commit()
             logger.info("delete_note(id=%s) [Success]", note_id)
         except SQLAlchemyError as e:
