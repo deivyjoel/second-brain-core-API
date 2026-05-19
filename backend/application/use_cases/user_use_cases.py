@@ -23,7 +23,7 @@ def login_user(user_repo: UserRepository,
     if not user_service.verify_pasword(password, user._password):
         return OperationResult(False, "Credenciales inválidas", None)
 
-    return OperationResult(True, "Usuario logueado correctamente", user)
+    return OperationResult(True, "Usuario logueado correctamente", user._id)
 
 
 @handle_usecase_errors
@@ -34,7 +34,7 @@ def register_user(user_repo: UserRepository,
                   user_service: UserService
                   ) -> OperationResult[int]:
     user_with_e = user_repo.get_by_mail(email)
-    if user_with_e is None:
+    if user_with_e is not None:
         return OperationResult(False, "El email ya está registrado", None)
     
     pass_hashed = user_service.hash_password(password)

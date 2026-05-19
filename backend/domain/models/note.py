@@ -12,7 +12,7 @@ from backend.domain.dto.new_note_dto import NewNoteDTO
 class Note:
     __slots__ = ("_id", "_name", "_content", 
                  "_theme_id", "_minutes", "_last_edited_at", "_created_at",
-                 "_new_times")
+                 "_new_times", "_user_id")
 
     def __init__(
         self,
@@ -22,11 +22,13 @@ class Note:
         minutes: float,
         last_edited_at : datetime,
         created_at: datetime,
+        user_id: int,
         theme_id: int | None = None
     ):
         self._id = id
         self._name = name
         self._content = content
+        self._user_id = user_id
         self._theme_id = theme_id
         self._minutes = minutes
         self._last_edited_at = last_edited_at

@@ -1,6 +1,6 @@
 from log import logger
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy import delete
+from sqlalchemy import update
 
 from backend.infrastructure.repositories.sql_alchemy import models
 from backend.infrastructure.errors.db import RepositoryError, UniqueConstraintViolation
@@ -20,6 +20,7 @@ class ThemeRepository():
             id = obj.id,
             name = obj.name,
             parent_id = obj.parent_id,
+            user_id = obj.user_id,
             created_at = obj.created_at,
             last_edited_at = obj.last_edited_at
         )
@@ -29,6 +30,7 @@ class ThemeRepository():
         obj = models.ThemeModel(
             name=theme.name, 
             parent_id=theme.parent_id,
+            user_id = theme.user_id
             )
         try:
             self.session.add(obj)
@@ -48,8 +50,12 @@ class ThemeRepository():
             logger.exception("add_theme(name=%s) [Unexpected error]", theme.name)
             raise RepositoryError("unexpected_error") from e
         
-    def delete(self, theme_id: int) -> None:
-        theme_obj = self.session.get(models.ThemeModel, theme_id)
+    def delete(self, theme_id: int, user_id: int) -> None:
+        theme_obj = self.session.query(models.ThemeModel).filter(
+            models.ThemeModel.id == theme_id,
+            models.ThemeModel.user_id == user_id,
+            models.ThemeModel.state == True
+        ).first()
         if not theme_obj:
             logger.warning("delete_theme(id=%s) [Not Found]", theme_id)
             raise RepositoryError("not_found")
@@ -68,7 +74,11 @@ class ThemeRepository():
             raise RepositoryError("unexpected_error") from e
 
     def update(self, theme: Theme) -> None:
-        theme_obj = self.session.get(models.ThemeModel, theme._id)
+        theme_obj = self.session.query(models.ThemeModel).filter(
+            models.ThemeModel.id == theme._id,
+            models.ThemeModel.user_id == theme._user_id,
+            models.ThemeModel.state == True
+        ).first()
         if not theme_obj:
             logger.warning("update_theme(id=%s) [Not Found]", theme._id)
             raise RepositoryError("not_found")
@@ -93,12 +103,18 @@ class ThemeRepository():
             logger.exception("update_theme(id=%s) [Unexpected error]", theme._id)
             raise RepositoryError("unexpected_error") from e
 
-    def delete_many(self, theme_ids: list[int]) -> None:
+    def delete_many(self, theme_ids: list[int], user_id: int) -> None:
         """Delete multiple themes at once."""
         if not theme_ids: return
 
         try:
-            stmt = delete(models.ThemeModel).where(models.ThemeModel.id.in_(theme_ids))
+            stmt = (
+                update(models.ThemeModel).where(
+                    models.ThemeModel.id.in_(theme_ids),
+                    models.ThemeModel.user_id == user_id,
+                    models.ThemeModel.state == True
+                ).values(state=False)
+            )
             self.session.execute(stmt)
             self.session.commit()
             logger.info("delete_many_themes(ids=%s) [Success]", theme_ids)
@@ -112,9 +128,13 @@ class ThemeRepository():
             raise RepositoryError("unexpected_error") from e
         
     # --- QUERIES ---
-    def get_by_id(self, theme_id: int) -> Theme | None:
+    def get_by_id(self, theme_id: int, user_id: int) -> Theme | None:
         try:
-            obj = self.session.get(models.ThemeModel, theme_id)
+            obj = self.session.query(models.ThemeModel).filter(
+                models.ThemeModel.id == theme_id,
+                models.ThemeModel.user_id == user_id,
+                models.ThemeModel.state == True
+            ).first()
             logger.info("get_theme_by_id(id=%s) [Success]", theme_id)
             return self._to_domain(obj) if obj else None
         except SQLAlchemyError as e:
@@ -138,11 +158,11 @@ class ThemeRepository():
             logger.exception("query_themes(filters=%s) [Unexpected error]", filters)
             raise RepositoryError("unexpected_error") from e
 
-    def get_all_themes(self) -> list[Theme]:
-        return self._query_themes()
+    def get_all_themes(self, user_id: int) -> list[Theme]:
+        return self._query_themes(user_id = user_id, state = True)
 
-    def get_themes_by_parent_id(self, theme_id: int) -> list[Theme]:
-        return self._query_themes(parent_id=theme_id)
+    def get_themes_by_parent_id(self, theme_id: int, user_id: int) -> list[Theme]:
+        return self._query_themes(parent_id=theme_id, user_id = user_id, state = True)
 
-    def get_themes_without_parent_id(self) -> list[Theme]:
-        return self._query_themes(parent_id = None)
+    def get_themes_without_parent_id(self, user_id: int) -> list[Theme]:
+        return self._query_themes(parent_id = None, user_id = user_id, state = True)

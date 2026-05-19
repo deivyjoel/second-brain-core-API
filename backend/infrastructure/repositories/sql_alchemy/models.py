@@ -1,6 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import String, ForeignKey
-from sqlalchemy.orm import relationship
 from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import DateTime
@@ -20,11 +19,6 @@ class UserModel(Base):
     password: Mapped[str] = mapped_column(String(255)) # En capa infrastructure se aplica hash.
     state: Mapped[bool] = mapped_column(default=True) # 1: activo, 0: inactivo
 
-    themes = relationship('ThemeModel', back_populates='user')
-    images = relationship('ImageModel', back_populates='user')
-    notes = relationship('NoteModel', back_populates='user')
-    times = relationship('TimeModel', back_populates='user')
-
 
 
 class ThemeModel(Base):
@@ -43,13 +37,6 @@ class ThemeModel(Base):
         default=get_utc_now
     )
     state: Mapped[bool] = mapped_column(default=True) # 1: activo, 0: inactivo
-
-    parent = relationship("ThemeModel", remote_side=[id], back_populates="children")
-    children = relationship("ThemeModel", back_populates="parent")
-
-    images = relationship("ImageModel", back_populates="theme")
-    notes = relationship("NoteModel", back_populates="theme")
-    user = relationship('UserModel', back_populates='themes')
     
 
 class NoteModel(Base):
@@ -70,16 +57,11 @@ class NoteModel(Base):
     )
     state: Mapped[bool] = mapped_column(default=True) # 1: activo, 0: inactivo
 
-    theme = relationship("ThemeModel", back_populates="notes")
-    times = relationship("TimeModel", back_populates="note")
-    user = relationship('UserModel', back_populates='notes')
-
 
 class TimeModel(Base):
     __tablename__ = 'time'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id : Mapped[int] = mapped_column(ForeignKey("user.id"))
     note_id: Mapped[int] = mapped_column(ForeignKey("note.id"))
     minutes: Mapped[float] = mapped_column(default=0.0)
     created_at: Mapped[datetime] = mapped_column(
@@ -87,9 +69,6 @@ class TimeModel(Base):
         default=get_utc_now
     )
     state: Mapped[bool] = mapped_column(default=True) # 1: activo, 0: inactivo
-
-    note = relationship("NoteModel", back_populates="times")
-    user = relationship('UserModel', back_populates='times')
 
 
 
@@ -108,5 +87,3 @@ class ImageModel(Base):
     )
     state: Mapped[bool] = mapped_column(default=True) # 1: activo, 0: inactivo
 
-    theme = relationship("ThemeModel", back_populates="images")
-    user = relationship('UserModel', back_populates='images')

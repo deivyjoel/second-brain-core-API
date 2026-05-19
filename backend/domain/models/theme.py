@@ -11,14 +11,15 @@ from backend.domain.dto.new_theme_dto import NewThemeDTO
 
 class Theme:
     __slots__ = ("_id", "_name", "_parent_id", "_last_edited_at", 
-                 "_created_at")
+                 "_created_at", "_user_id")
 
     def __init__(self, id: int, name: str, parent_id: int | None, 
-                 last_edited_at: datetime,
+                 last_edited_at: datetime, user_id: int,
                  created_at: datetime):
         self._id = id
         self._name = name
         self._parent_id = parent_id
+        self._user_id = user_id
         self._last_edited_at = last_edited_at
         self._created_at = created_at
 

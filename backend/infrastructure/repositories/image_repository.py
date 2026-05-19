@@ -1,5 +1,5 @@
 from log import logger
-from sqlalchemy import delete, select
+from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from backend.infrastructure.repositories._image_storage import ImageStorage, ImageStorageError
@@ -19,6 +19,7 @@ class ImageRepository():
         return Image(
             id=img.id,
             name=img.name,
+            user_id = img.user_id,
             file_path=img.file_path,
             theme_id=img.theme_id,
             created_at=img.created_at
@@ -39,7 +40,8 @@ class ImageRepository():
             obj = models.ImageModel(
                 name=image.name,
                 file_path=file_path, 
-                theme_id=image.theme_id
+                theme_id=image.theme_id,
+                user_id = image.user_id
             )
             self.session.add(obj)
             self.session.commit()
@@ -72,8 +74,12 @@ class ImageRepository():
                 self.image_store.undo_save(file_path)
 
 
-    def delete(self, image_id: int) -> None:
-        image_obj = self.session.get(models.ImageModel, image_id)
+    def delete(self, image_id: int, user_id: int) -> None:
+        image_obj = self.session.query(models.ImageModel).filter(
+            models.ImageModel.id == image_id,
+            models.ImageModel.user_id == user_id,
+            models.ImageModel.state == True
+        ).first()
         if not image_obj:
             logger.warning("delete_image(id=%s) [Not found]", image_id)
             raise RepositoryError("not_found")
@@ -101,7 +107,11 @@ class ImageRepository():
 
 
     def update(self, image: Image) -> None:
-        image_obj = self.session.get(models.ImageModel, image._id)
+        image_obj = self.session.query(models.ImageModel).filter(
+            models.ImageModel.id == image._id,
+            models.ImageModel.user_id == image._user_id,
+            models.ImageModel.state == True
+        ).first()
         if not image_obj:
             logger.warning("update_image(id=%s) [Not found]", image._id)
             raise RepositoryError("not_found")
@@ -123,14 +133,19 @@ class ImageRepository():
             logger.exception("update_image(id=%s) [SQLAlchemyError]: %s", image._id, e)
             raise RepositoryError("db_error") from e
 
-    def delete_many(self, image_ids: list[int]) -> None:
+    def delete_many(self, image_ids: list[int], user_id: int) -> None:
         if not image_ids:
             return
-
-        #....
         
         try:
-
+            stmt = (
+                update(models.ImageModel).where(
+                    models.ImageModel.id.in_(image_ids),
+                    models.ImageModel.user_id == user_id,
+                    models.ImageModel.state == True
+                ).values(state=False)
+            )
+            self.session.execute(stmt)
             self.session.commit()
             
             logger.info("delete_many_images(ids=%s) [Success]")
@@ -148,11 +163,17 @@ class ImageRepository():
             logger.exception("delete_many_notes [Unexpected error]")
             raise RepositoryError("unexpected_error") from e
 
+
         
     # --- QUERIES ---
-    def get_by_id(self, image_id: int) -> Image | None:
+    def get_by_id(self, image_id: int, user_id: int) -> Image | None:
         try:
-            obj = self.session.get(models.ImageModel, image_id)
+            obj = self.session.query(Image.ImageModel).filter(
+                models.ImageModel.id == image_id,
+                models.ImageModel.user_id == user_id,
+                models.ImageModel.state == True
+            ).first()
+            
             logger.info("get_image_by_id(id=%s) [Success]", image_id)
             return self._to_domain(obj) if obj else None
         
@@ -170,11 +191,11 @@ class ImageRepository():
             logger.exception("query_images(filters=%s) [SQLAlchemyError]: %s", filters, e)
             raise RepositoryError("db_error") from e
 
-    def get_all_images(self):
-        return self._query_images()
+    def get_all_images(self, user_id: int):
+        return self._query_images(user_id = user_id, state=True)
 
-    def get_images_by_theme_id(self, theme_id: int):
-        return self._query_images(theme_id=theme_id)
+    def get_images_by_theme_id(self, theme_id: int, user_id: int):
+        return self._query_images(theme_id=theme_id, user_id = user_id, state=True)
 
-    def get_images_without_theme_id(self):
-        return self._query_images(theme_id=None)
+    def get_images_without_theme_id(self, user_id: int):
+        return self._query_images(theme_id=None, user_id=user_id, state=True)

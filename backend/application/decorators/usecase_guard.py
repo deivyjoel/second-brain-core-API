@@ -42,8 +42,12 @@ def handle_usecase_errors(f):
         except UserDomainError as e:
             return OperationResult(False, str(e), None)
         
-        except DBError:
+        except DBError as e:
+            print("Error: --------------")
+            print(str(e))
+            print("Error: --------------")
             return OperationResult(False, "Error de base de datos", None)
+        
         
         except Exception as e:
             logger.exception(

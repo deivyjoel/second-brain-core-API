@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from jose import jwt
 import os
 
-from application.backend_api import BackendAPI
+from backend.application.backend_api import BackendAPI
 from backend.infrastructure.dependencies import get_api, get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -32,6 +32,7 @@ def register_user(body: RegisterRequest,
 @router.post("/login")
 def login_user(form_data: OAuth2PasswordRequestForm = Depends(),
                api: BackendAPI = Depends(get_api)):
+
     result = api.login_user(form_data.username, form_data.password)
     if not result.successful:
         raise HTTPException(status_code=401, detail=result.info)

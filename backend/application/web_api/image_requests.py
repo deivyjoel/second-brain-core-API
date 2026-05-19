@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 
-from application.backend_api import BackendAPI
+from backend.application.backend_api import BackendAPI
 from backend.infrastructure.dependencies import get_api, get_current_user
 
 

@@ -1,5 +1,5 @@
 from log import logger
-from sqlalchemy import delete
+from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from backend.infrastructure.repositories.sql_alchemy import models
@@ -24,6 +24,7 @@ class NoteRepository():
             name = note.name,
             content = note.content or "",
             minutes = minutes,
+            user_id = note.user_id,
             theme_id = note.theme_id,
             last_edited_at=note.last_edited_at,
             created_at=note.created_at
@@ -43,6 +44,7 @@ class NoteRepository():
     def add(self, note: NewNoteDTO) -> int:
         obj = models.NoteModel(
             name=note.name, 
+            user_id=note.user_id,
             theme_id=note.theme_id
         )
         try:
@@ -63,8 +65,13 @@ class NoteRepository():
             logger.exception("add_note(name=%s) [Unexpected error]", note.name)
             raise RepositoryError("unexpected_error") from e
 
-    def delete(self, note_id: int) -> None:
-        note_obj = self.session.get(models.NoteModel, note_id)
+    def delete(self, note_id: int, user_id: int) -> None:
+        note_obj = self.session.query(models.NoteModel).filter(
+            models.NoteModel.id == note_id,
+            models.NoteModel.user_id == user_id,
+            models.NoteModel.state == True
+        ).first()
+        
         if not note_obj:
             logger.warning("delete_note(id=%s) [Not found]", note_id)
             raise RepositoryError("not_found")
@@ -83,7 +90,12 @@ class NoteRepository():
             raise RepositoryError("unexpected_error") from e
 
     def update(self, note: Note) -> None:
-        note_obj = self.session.get(models.NoteModel, note._id)
+        note_obj = self.session.query(models.NoteModel).filter(
+            models.NoteModel.id == note._id,
+            models.NoteModel.user_id == note._user_id,
+            models.NoteModel.state == True
+        ).first()
+
         if not note_obj:
             logger.warning("update_note(id=%s) [Not found]", note._id)
             raise RepositoryError("not_found")
@@ -107,12 +119,18 @@ class NoteRepository():
             logger.exception("update_note(id=%s) [Unexpected error]", note._id)
             raise RepositoryError("unexpected_error") from e
 
-    def delete_many(self, note_ids: list[int]) -> None:
+    def delete_many(self, note_ids: list[int], user_id: int) -> None:
         """ Delete multiple notes at once."""
         if not note_ids: return
                 
         try:
-            stmt = delete(models.NoteModel).where(models.NoteModel.id.in_(note_ids))
+            stmt = (
+                update(models.NoteModel).where(
+                    models.NoteModel.id.in_(note_ids),
+                    models.NoteModel.user_id == user_id,
+                    models.NoteModel.state == True
+                ).values(state=False)
+            )
             self.session.execute(stmt)
             self.session.commit()
             logger.info("delete_many_notes(ids=%s) [Success]", note_ids)
@@ -126,9 +144,13 @@ class NoteRepository():
             raise RepositoryError("unexpected_error") from e
         
     # --- QUERIES ---
-    def get_by_id(self, note_id: int) -> Note | None:
+    def get_by_id(self, note_id: int, user_id: int) -> Note | None:
         try:
-            obj = self.session.get(models.NoteModel, note_id)
+            obj = self.session.query(models.NoteModel).filter(
+                models.NoteModel.id == note_id,
+                models.NoteModel.user_id == user_id,
+                models.NoteModel.state == True
+            ).first()
             logger.info("get_note_by_id(id=%s) [Success]", note_id)
             return self._to_domain(obj) if obj else None
         except SQLAlchemyError as e:
@@ -150,14 +172,14 @@ class NoteRepository():
             logger.exception("query_notes(filters=%s) [Unexpected error]", filters)
             raise RepositoryError("unexpected_error") from e
         
-    def get_all_notes(self) -> list[NoteRecordLiteDTO]:
-        return self._query_notes()
+    def get_all_notes(self, user_id: int) -> list[NoteRecordLiteDTO]:
+        return self._query_notes(user_id = user_id, state=True)
 
-    def get_notes_by_theme_id(self, theme_id: int) -> list[NoteRecordLiteDTO]:
-        return self._query_notes(theme_id=theme_id)
+    def get_notes_by_theme_id(self, theme_id: int, user_id: int) -> list[NoteRecordLiteDTO]:
+        return self._query_notes(theme_id=theme_id, user_id = user_id, state=True)
 
-    def get_notes_without_theme_id(self) -> list[NoteRecordLiteDTO]:
-        return self._query_notes(theme_id=None)
+    def get_notes_without_theme_id(self, user_id: int) -> list[NoteRecordLiteDTO]:
+        return self._query_notes(theme_id=None, user_id = user_id, state=True)
 
     # --- TIME WRAPPERS ---
     def add_time_record(self, note_id: int, minutes: float) -> int:
