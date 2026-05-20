@@ -12,13 +12,13 @@ class UserRepository():
         self.session = session
         logger.info("UserRepository initialized successfully: %s", session)
 
-    def _to_domain(self, obj: models.UserModel) -> User:
+    def _to_domain(self, user: models.UserModel) -> User:
         """Converts database model to domain entity."""
         return User(
-            id=obj.id,
-            name=obj.name,
-            mail=obj.mail,
-            password=obj.password
+            id=user.id,
+            name=user.name,
+            mail=user.mail,
+            password=user.password
         )
 
     # --- CRUD ---

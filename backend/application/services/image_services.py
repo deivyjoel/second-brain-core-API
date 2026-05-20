@@ -6,23 +6,23 @@ class ImageService:
     def __init__(self, image_repo: ImageRepository):
         self.image_repo = image_repo
 
-    def exists(self, image_id: int) -> bool:
-        return self.image_repo.get_by_id(image_id) is not None
+    def exists(self, image_id: int, user_id: int) -> bool:
+        return self.image_repo.get_by_id(image_id, user_id) is not None
 
-    def get_unique_name_for_theme(self, base_name: str, theme_id: int | None = None) -> str:
+    def get_unique_name_for_theme(self, base_name: str, user_id: int, theme_id: int | None = None) -> str:
         if theme_id:
-            images = self.image_repo.get_images_by_theme_id(theme_id)
+            images = self.image_repo.get_images_by_theme_id(theme_id, user_id)
         else:
-            images = self.image_repo.get_images_without_theme_id() 
+            images = self.image_repo.get_images_without_theme_id(user_id) 
         
         sibling_names = [img._name for img in images]
         
         return generate_unique_name(base_name, sibling_names)
     
-    def get_names_in_theme_id(self, theme_id: int | None = None) -> list[str]:
+    def get_names_in_theme_id(self, user_id: int, theme_id: int | None = None) -> list[str]:
         if theme_id:
-            images = self.image_repo.get_images_by_theme_id(theme_id)
+            images = self.image_repo.get_images_by_theme_id(theme_id, user_id)
         else:
-            images = self.image_repo.get_images_without_theme_id()
+            images = self.image_repo.get_images_without_theme_id(user_id)
             
         return [img._name for img in images] if images else []

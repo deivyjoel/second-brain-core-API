@@ -27,11 +27,11 @@ class AnalyticsRepository:
                     models.NoteModel.theme_id.in_(family_theme_ids),
                     models.NoteModel.user_id == user_id,
                     models.NoteModel.state == True
-                    )
+                )
                 .first()
             )
             
-            logger.info("get_time_and_note_counts(theme_id=%s) [Success]", theme_id)
+            logger.info("get_time_and_note_counts(theme_id=%s, user_id=%s) [Success]", theme_id, user_id)
             return ThemeRawStatsDTO(
                 total_notes = result.notes if result else 0,
                 minutes = result.minutes if result else 0,
@@ -40,10 +40,10 @@ class AnalyticsRepository:
             )
 
         except SQLAlchemyError as e:
-            logger.error("get_time_and_note_counts(id=%s) [SQLAlchemyError]: %s", theme_id, e)
+            logger.exception("get_time_and_note_counts(theme_id=%s, user_id=%s) [SQLAlchemyError]: %s", theme_id, user_id, e)
             raise RepositoryError("db_error") from e
         except Exception as e:
-            logger.exception("get_time_and_note_counts(id=%s) [Unexpected error]", theme_id)
+            logger.exception("get_time_and_note_counts(theme_id=%s, user_id=%s) [Unexpected error]", theme_id, user_id)
             raise RepositoryError("unexpected_error") from e
 
     def count_direct_notes(self, theme_id: int, user_id: int) -> int:
@@ -54,17 +54,17 @@ class AnalyticsRepository:
                 .filter(
                     models.NoteModel.theme_id == theme_id,
                     models.NoteModel.user_id == user_id,
-                    models.NoteModel.state == True        
-                    )
+                    models.NoteModel.state == True
+                )
                 .scalar()
             )
-            logger.info("count_direct_notes(theme_id=%s) [Success]", theme_id)
+            logger.info("count_direct_notes(theme_id=%s, user_id=%s) [Success]", theme_id, user_id)
             return count or 0
         except SQLAlchemyError as e:
-            logger.error("count_direct_notes(id=%s) [SQLAlchemyError]: %s", theme_id, e)
+            logger.exception("count_direct_notes(theme_id=%s, user_id=%s) [SQLAlchemyError]: %s", theme_id, user_id, e)
             raise RepositoryError("db_error") from e
         except Exception as e:
-            logger.exception("count_direct_notes(id=%s) [Unexpected error]", theme_id)
+            logger.exception("count_direct_notes(theme_id=%s, user_id=%s) [Unexpected error]", theme_id, user_id)
             raise RepositoryError("unexpected_error") from e
 
     def get_aggregated_content(self, family_theme_ids: list[int], theme_id: int, user_id: int) -> str:
@@ -76,14 +76,14 @@ class AnalyticsRepository:
                     models.NoteModel.theme_id.in_(family_theme_ids),
                     models.NoteModel.user_id == user_id,
                     models.NoteModel.state == True
-                    )
+                )
                 .all()
             )
-            logger.info("get_aggregated_content(theme_id=%s) [Success]", theme_id)
+            logger.info("get_aggregated_content(theme_id=%s, user_id=%s) [Success]", theme_id, user_id)
             return " ".join([c[0] for c in notes_content if c[0]])
         except SQLAlchemyError as e:
-            logger.error("get_aggregated_content(id=%s) [SQLAlchemyError]: %s", theme_id, e)
+            logger.exception("get_aggregated_content(theme_id=%s, user_id=%s) [SQLAlchemyError]: %s", theme_id, user_id, e)
             raise RepositoryError("db_error") from e
         except Exception as e:
-            logger.exception("get_aggregated_content(id=%s) [Unexpected error]", theme_id)
+            logger.exception("get_aggregated_content(theme_id=%s, user_id=%s) [Unexpected error]", theme_id, user_id)
             raise RepositoryError("unexpected_error") from e

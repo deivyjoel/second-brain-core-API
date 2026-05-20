@@ -21,41 +21,41 @@ from backend.domain.models.theme import Theme
 def create_theme(
     theme_repo: ThemeRepository,
     theme_service: ThemeService,
-    name: str, 
     user_id: int,
+    name: str, 
     parent_id: int | None = None
     ) -> OperationResult[int]:    
-    sibling_names = theme_service.get_names_in_theme_id(parent_id)
+    sibling_names = theme_service.get_names_in_theme_id(user_id, parent_id)
     theme = Theme.create(name, user_id, sibling_names=set(sibling_names), parent_id=parent_id)
     id_theme = theme_repo.add(theme)
             
     return OperationResult(True, "Tema creado exitosamente", id_theme)
 
 @handle_usecase_errors
-def delete_theme(theme_repo: ThemeRepository, theme_id: int) -> OperationResult[None]:
-    theme = theme_repo.get_by_id(theme_id)
+def delete_theme(theme_repo: ThemeRepository, theme_id: int, user_id: int) -> OperationResult[None]:
+    theme = theme_repo.get_by_id(theme_id, user_id)
     if not theme:
         return OperationResult(False, "No se pudo eliminar el tema porque no existe", None)
-    theme_repo.delete(theme_id)
+    theme_repo.delete(theme_id, user_id)
     return OperationResult(successful=True, 
                                 info="Se eliminó correctamente el tema",
                                 obj=None)            
 
 @handle_usecase_errors
-def delete_many_themes(theme_repo: ThemeRepository, theme_ids: list[int]) -> OperationResult[None]:
-    theme_repo.delete_many(theme_ids)
+def delete_many_themes(theme_repo: ThemeRepository, user_id: int, theme_ids: list[int]) -> OperationResult[None]:
+    theme_repo.delete_many(theme_ids, user_id)
     return OperationResult(True, "Temas eliminados correctamente", None)
 
 
 @handle_usecase_errors
 def rename_theme(theme_repo: ThemeRepository,
                  theme_service: ThemeService, 
-                theme_id: int, new_name: str) -> OperationResult[None]:
-    theme = theme_repo.get_by_id(theme_id)
+                theme_id: int, user_id: int , new_name: str) -> OperationResult[None]:
+    theme = theme_repo.get_by_id(theme_id, user_id)
     if not theme:
         return OperationResult(False, "No se pudo renombrar el tema porque no existe", None)
 
-    names_in_theme = theme_service.get_names_in_theme_id(theme._parent_id)
+    names_in_theme = theme_service.get_names_in_theme_id(user_id, theme._parent_id)
     #UTC
     now = datetime.now(timezone.utc)
     theme.change_name(new_name, set(names_in_theme), now)
@@ -65,22 +65,23 @@ def rename_theme(theme_repo: ThemeRepository,
 
 @handle_usecase_errors
 def remove_theme(theme_repo: ThemeRepository,
+                 search_repo: SearchEfficiencyRepository,
                            theme_service: ThemeService,
                            theme_id: int, 
-                           search_repo: SearchEfficiencyRepository,
+                           user_id: int,
                            new_parent_id: int | None = None
                            ) -> OperationResult[None]:
-    theme = theme_repo.get_by_id(theme_id)
+    theme = theme_repo.get_by_id(theme_id, user_id)
     if not theme:
         return OperationResult(False, "No se pudo cambiar el tema padre del tema hijo porque el tema hijo no existe", None)
 
     if new_parent_id is not None:
-        parent_theme = theme_repo.get_by_id(new_parent_id)
+        parent_theme = theme_repo.get_by_id(new_parent_id, user_id)
         if not parent_theme:
             return OperationResult(False, "No se pudo cambiar el tema padre del tema hijo porque el tema padre es inexistente", None)
         
-    names_in_theme = theme_service.get_names_in_theme_id(new_parent_id)
-    descendients = set(search_repo.get_theme_descendants_ids(theme_id))
+    names_in_theme = theme_service.get_names_in_theme_id(user_id, new_parent_id)
+    descendients = set(search_repo.get_theme_descendants_ids(theme_id, user_id))
 
     theme.change_parent_id(new_parent_id, set(names_in_theme), descendients)
     theme_repo.update(theme)
@@ -92,24 +93,26 @@ def remove_theme(theme_repo: ThemeRepository,
 def get_unique_theme_name(
                     theme_repo: ThemeRepository,
                     theme_service: ThemeService,
+                    user_id: int, 
                     name: str, theme_id: int | None = None) -> OperationResult[str]:
     if theme_id:
-        theme = theme_repo.get_by_id(theme_id)
+        theme = theme_repo.get_by_id(theme_id, user_id)
         if not theme:
             return OperationResult(False, "No se pudo obtener un unico nombre para el tema porque el tema dado no existe", None)
-    u_name = theme_service.get_unique_name_for_theme(name, theme_id)
+    u_name = theme_service.get_unique_name_for_theme(name, user_id, theme_id)
     return OperationResult(True, "", u_name)
 
 @handle_usecase_errors
-def get_themes_descendants(theme_id: int, search_repo: SearchEfficiencyRepository) -> OperationResult[list[int]]:
-    ids_notes = search_repo.get_theme_descendants_ids(theme_id)
+def get_themes_descendants(search_repo: SearchEfficiencyRepository, theme_id: int, user_id: int) -> OperationResult[list[int]]:
+    ids_notes = search_repo.get_theme_descendants_ids(theme_id, user_id)
     return OperationResult(True, "", ids_notes)
 
 @handle_usecase_errors
 def get_theme_details(theme_repo: ThemeRepository, 
-              theme_id: int
+              theme_id: int,
+              user_id: int
               ) -> OperationResult[ThemeDetailDTO]:
-    theme = theme_repo.get_by_id(theme_id)
+    theme = theme_repo.get_by_id(theme_id, user_id)
     if not theme:
         return OperationResult(False, "No se pudo obtener los detalles del tema porque no existe", None)
     theme_dto = ThemeDetailDTO(
@@ -119,12 +122,12 @@ def get_theme_details(theme_repo: ThemeRepository,
     )
 
     return OperationResult(successful=True, 
-                                info="Se eliminó correctamente el tema",
+                                info="Detalles del tema obtenidos correctamente",
                                 obj=theme_dto)            
  
 @handle_usecase_errors
-def list_themes(theme_repo: ThemeRepository) -> OperationResult[list[ThemeSummaryDTO]]:
-    themes = theme_repo.get_all_themes()
+def list_themes(theme_repo: ThemeRepository, user_id: int) -> OperationResult[list[ThemeSummaryDTO]]:
+    themes = theme_repo.get_all_themes(user_id)
     themes_dto = [ThemeSummaryDTO(
         id = t._id,
         name = t._name
@@ -136,12 +139,13 @@ def list_themes(theme_repo: ThemeRepository) -> OperationResult[list[ThemeSummar
 @handle_usecase_errors
 def list_child_themes(
     theme_repo: ThemeRepository, 
+    user_id: int,
     parent_id: int
     ) -> OperationResult[list[ThemeSummaryDTO]]:
-    theme = theme_repo.get_by_id(parent_id)
+    theme = theme_repo.get_by_id(parent_id, user_id)
     if not theme:
         return OperationResult(False, "No se pudo listar los temas hijos del tema padre porque el tema padre no existe", None)
-    themes = theme_repo.get_themes_by_parent_id(theme_id=parent_id)
+    themes = theme_repo.get_themes_by_parent_id(parent_id, user_id)
     themes_dto = [ThemeSummaryDTO(
         id = t._id,
         name = t._name
@@ -151,8 +155,8 @@ def list_child_themes(
                                 obj=themes_dto)         
       
 @handle_usecase_errors
-def list_root_themes(theme_repo: ThemeRepository) -> OperationResult[list[ThemeSummaryDTO]]:
-    themes = theme_repo.get_themes_without_parent_id()
+def list_root_themes(theme_repo: ThemeRepository, user_id: int) -> OperationResult[list[ThemeSummaryDTO]]:
+    themes = theme_repo.get_themes_without_parent_id(user_id)
     themes_dto = [ThemeSummaryDTO(
         id = t._id,
         name = t._name
@@ -165,16 +169,18 @@ def get_theme_analytics(analy_repo: AnalyticsRepository,
                       search_repo: SearchEfficiencyRepository,
                       theme_repo: ThemeRepository, 
                       analyzer_service: AnalyzerService,
-                      theme_id: int) -> OperationResult[ThemeAnalyticsDTO]:
+                      theme_id: int,
+                      user_id: int
+                      ) -> OperationResult[ThemeAnalyticsDTO]:
     
-    theme = theme_repo.get_by_id(theme_id)
+    theme = theme_repo.get_by_id(theme_id, user_id)
     if not theme:
         return OperationResult(False, "No se pudo obtener las analiticas del tema porque el tema dado es inexistente", None)
-    descendants = search_repo.get_theme_descendants_ids(theme_id)
-    raw_stats = analy_repo.get_time_and_note_counts(descendants, theme_id)
-    n_notes_directly = analy_repo.count_direct_notes(theme_id)
+    descendants = search_repo.get_theme_descendants_ids(theme_id, user_id)
+    raw_stats = analy_repo.get_time_and_note_counts(descendants, theme_id, user_id)
+    n_notes_directly = analy_repo.count_direct_notes(theme_id, user_id)
     n_entities = raw_stats.total_notes + raw_stats.n_subthemes
-    content_total = analy_repo.get_aggregated_content(descendants, theme_id)
+    content_total = analy_repo.get_aggregated_content(descendants, theme_id, user_id)
     n_meaningful = analyzer_service.count_meaningful(content_total)
     n_unique = analyzer_service.count_unique(content_total)
 

@@ -21,48 +21,47 @@ class NoteRepository():
         minutes = self.time_repo.get_total_minutes_by_note(note.id)
         return Note(
             id=note.id,
+            user_id = note.user_id,
             name = note.name,
             content = note.content or "",
             minutes = minutes,
-            user_id = note.user_id,
             theme_id = note.theme_id,
             last_edited_at=note.last_edited_at,
             created_at=note.created_at
         )
     
-    def _to_dto(self, obj: models.NoteModel) -> NoteRecordLiteDTO:
-        """Converts database model to dto."""
+    def _to_dto(self, note: models.NoteModel) -> NoteRecordLiteDTO:
         return NoteRecordLiteDTO(
-            id = obj.id,
-            name = obj.name,
-            theme_id = obj.theme_id,
-            last_edited_at = obj.last_edited_at,
-            created_at = obj.created_at
+            id = note.id,
+            name = note.name,
+            theme_id = note.theme_id,
+            last_edited_at = note.last_edited_at,
+            created_at = note.created_at
         )
 
     # --- CRUD ---
     def add(self, note: NewNoteDTO) -> int:
         obj = models.NoteModel(
-            name=note.name, 
             user_id=note.user_id,
+            name=note.name, 
             theme_id=note.theme_id
         )
         try:
             self.session.add(obj)
             self.session.commit()
-            logger.info("add_note(id=%s) [Success]", obj.id)
+            logger.info("add_note(id=%s, user_id=%s) [Success]", obj.id, obj.user_id)
             return obj.id
         except IntegrityError as e:
             self.session.rollback()
-            logger.exception("add_note(name=%s) [IntegrityError - Possible duplicate]: %s", note.name, e)
+            logger.exception("add_note(name=%s, user_id=%s) [IntegrityError - Possible duplicate]: %s", note.name, note.user_id, e)
             raise UniqueConstraintViolation("unique_violation") from e
         except SQLAlchemyError as e:
             self.session.rollback()
-            logger.exception("add_note(name=%s) [SQLAlchemyError]: %s", note.name, e)
+            logger.exception("add_note(name=%s, user_id=%s) [SQLAlchemyError]: %s", note.name, note.user_id, e)
             raise RepositoryError("db_error") from e
         except Exception as e:
             self.session.rollback()
-            logger.exception("add_note(name=%s) [Unexpected error]", note.name)
+            logger.exception("add_note(name=%s, user_id=%s) [Unexpected error]", note.name, note.user_id)
             raise RepositoryError("unexpected_error") from e
 
     def delete(self, note_id: int, user_id: int) -> None:
@@ -73,20 +72,20 @@ class NoteRepository():
         ).first()
         
         if not note_obj:
-            logger.warning("delete_note(id=%s) [Not found]", note_id)
+            logger.warning("delete_note(id=%s, user_id=%s) [Not found]", note_id, user_id)
             raise RepositoryError("not_found")
         note_obj.state = False
 
         try:
             self.session.commit()
-            logger.info("delete_note(id=%s) [Success]", note_id)
+            logger.info("delete_note(id=%s, user_id=%s) [Success]", note_id, user_id)
         except SQLAlchemyError as e:
             self.session.rollback()
-            logger.exception("delete_note(id=%s) [SQLAlchemyError]: %s", note_id, e)
+            logger.exception("delete_note(id=%s, user_id=%s) [SQLAlchemyError]: %s", note_id, user_id, e)
             raise RepositoryError("db_error") from e
         except Exception as e:
             self.session.rollback()
-            logger.exception("delete_note(id=%s) [Unexpected error]", note_id)
+            logger.exception("delete_note(id=%s, user_id=%s) [Unexpected error]", note_id, user_id)
             raise RepositoryError("unexpected_error") from e
 
     def update(self, note: Note) -> None:
@@ -97,7 +96,7 @@ class NoteRepository():
         ).first()
 
         if not note_obj:
-            logger.warning("update_note(id=%s) [Not found]", note._id)
+            logger.warning("update_note(id=%s, user_id=%s) [Not found]", note._id, note._user_id)
             raise RepositoryError("not_found")
 
         note_obj.name = note._name
@@ -107,20 +106,18 @@ class NoteRepository():
 
         try:
             self.session.commit()
-            logger.info("update_note(id=%s) [Sucess]", note._id)
-
+            logger.info("update_note(id=%s, user_id=%s) [Success]", note._id, note._user_id)
         except IntegrityError as e:
-            logger.exception("update_note(id=%s) [IntegrityError]: %s", note._id, e)
+            logger.exception("update_note(id=%s, user_id=%s) [IntegrityError]: %s", note._id, note._user_id, e)
             raise UniqueConstraintViolation("unique_violation") from e
         except SQLAlchemyError as e:
-            logger.exception("update_note(id=%s) [SQLAlchemyError]: %s", note._id, e)
+            logger.exception("update_note(id=%s, user_id=%s) [SQLAlchemyError]: %s", note._id, note._user_id, e)
             raise RepositoryError("db_error") from e
         except Exception as e:
-            logger.exception("update_note(id=%s) [Unexpected error]", note._id)
+            logger.exception("update_note(id=%s, user_id=%s) [Unexpected error]", note._id, note._user_id)
             raise RepositoryError("unexpected_error") from e
 
     def delete_many(self, note_ids: list[int], user_id: int) -> None:
-        """ Delete multiple notes at once."""
         if not note_ids: return
                 
         try:
@@ -133,14 +130,14 @@ class NoteRepository():
             )
             self.session.execute(stmt)
             self.session.commit()
-            logger.info("delete_many_notes(ids=%s) [Success]", note_ids)
+            logger.info("delete_many_notes(ids=%s, user_id=%s) [Success]", note_ids, user_id)
         except SQLAlchemyError as e:
             self.session.rollback()
-            logger.exception("delete_many_notes [SQLAlchemyError]: %s", e)
+            logger.exception("delete_many_notes(user_id=%s) [SQLAlchemyError]: %s", user_id, e)
             raise RepositoryError("db_error") from e
         except Exception as e:
             self.session.rollback()
-            logger.exception("delete_many_notes [Unexpected error]")
+            logger.exception("delete_many_notes(user_id=%s) [Unexpected error]", user_id)
             raise RepositoryError("unexpected_error") from e
         
     # --- QUERIES ---
@@ -151,13 +148,13 @@ class NoteRepository():
                 models.NoteModel.user_id == user_id,
                 models.NoteModel.state == True
             ).first()
-            logger.info("get_note_by_id(id=%s) [Success]", note_id)
+            logger.info("get_note_by_id(id=%s, user_id=%s) [Success]", note_id, user_id)
             return self._to_domain(obj) if obj else None
         except SQLAlchemyError as e:
-            logger.exception("get_note_by_id(id=%s) [SQLAlchemyError]: %s", note_id, e)
+            logger.exception("get_note_by_id(id=%s, user_id=%s) [SQLAlchemyError]: %s", note_id, user_id, e)
             raise RepositoryError("db_error") from e
         except Exception as e:
-            logger.exception("get_note_by_id(id=%s) [Unexpected error]", note_id)
+            logger.exception("get_note_by_id(id=%s, user_id=%s) [Unexpected error]", note_id, user_id)
             raise RepositoryError("unexpected_error") from e
         
     def _query_notes(self, **filters) -> list[NoteRecordLiteDTO]:
@@ -173,13 +170,13 @@ class NoteRepository():
             raise RepositoryError("unexpected_error") from e
         
     def get_all_notes(self, user_id: int) -> list[NoteRecordLiteDTO]:
-        return self._query_notes(user_id = user_id, state=True)
+        return self._query_notes(user_id=user_id, state=True)
 
     def get_notes_by_theme_id(self, theme_id: int, user_id: int) -> list[NoteRecordLiteDTO]:
-        return self._query_notes(theme_id=theme_id, user_id = user_id, state=True)
+        return self._query_notes(theme_id=theme_id, user_id=user_id, state=True)
 
     def get_notes_without_theme_id(self, user_id: int) -> list[NoteRecordLiteDTO]:
-        return self._query_notes(theme_id=None, user_id = user_id, state=True)
+        return self._query_notes(theme_id=None, user_id=user_id, state=True)
 
     # --- TIME WRAPPERS ---
     def add_time_record(self, note_id: int, minutes: float) -> int:

@@ -8,20 +8,20 @@ from backend.domain.errors.image_errors import (
 from backend.domain.dto.new_image_dto import NewImageDTO 
 
 class Image:
-    __slots__ = ("_id", "_name", "_file_path", "_theme_id", "_created_at", "_user_id")
+    __slots__ = ("_id", "_user_id", "_name", "_file_path", "_theme_id", "_created_at")
 
     def __init__(
         self,
         id: int,
+        user_id: int,
         name: str,
         file_path: str,
         created_at: datetime,
-        user_id: int,
         theme_id: int | None = None
     ):
         self._id = id
-        self._name = name
         self._user_id = user_id
+        self._name = name
         self._file_path = file_path
         self._theme_id = theme_id
         self._created_at = created_at

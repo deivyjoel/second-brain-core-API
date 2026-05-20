@@ -9,7 +9,7 @@ from backend.infrastructure.dependencies import get_api, get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-SECRET_KEY = os.getenv("SECRET_KEY")
+
 
 
 # --- Schemas ---
@@ -36,6 +36,10 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(),
     result = api.login_user(form_data.username, form_data.password)
     if not result.successful:
         raise HTTPException(status_code=401, detail=result.info)
+
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    if not SECRET_KEY:
+        raise RuntimeError("SECRET_KEY no está definida en las variables de entorno")
     
     token = jwt.encode({"user_id": result.obj}, SECRET_KEY, algorithm="HS256")
     return {"access_token": token, "token_type": "bearer"}

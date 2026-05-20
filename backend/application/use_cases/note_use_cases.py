@@ -20,11 +20,10 @@ from backend.domain.dto.new_note_dto import NewNoteDTO
 # --- OPERATIONS ---
 @handle_usecase_errors
 def create_note(note_repo: NoteRepository, 
-                user_id: int,
                 note_services: NoteService,
-                name: str, theme_id: int | None = None
+                user_id: int, name: str, theme_id: int | None = None
                 ) -> OperationResult[int]:
-    sibling_names = note_services.get_names_in_theme_id(theme_id, user_id)
+    sibling_names = note_services.get_names_in_theme_id(user_id, theme_id)
     note: NewNoteDTO = Note.create(name, user_id, set(sibling_names), theme_id)
     note_id = note_repo.add(note)
     return OperationResult(True, "Nota creada exitosamente", note_id)
@@ -38,14 +37,14 @@ def delete_note(note_repo: NoteRepository, note_id: int, user_id: int) -> Operat
     return OperationResult(True, "Nota eliminada correctamente", None)
 
 @handle_usecase_errors
-def delete_many_notes(note_repo: NoteRepository, note_ids: list[int], user_id: int) -> OperationResult[None]:
+def delete_many_notes(note_repo: NoteRepository, user_id: int, note_ids: list[int]) -> OperationResult[None]:
     note_repo.delete_many(note_ids, user_id)
     return OperationResult(True, "Notas eliminadas correctamente", None)
 
 @handle_usecase_errors
 def rename_note(note_repo: NoteRepository, 
                 note_service: NoteService,
-                note_id: int, new_name: str, user_id: int) -> OperationResult[None]:
+                note_id: int, user_id: int, new_name: str) -> OperationResult[None]:
     note = note_repo.get_by_id(note_id, user_id)
     if not note:
         return OperationResult(False, "No se pudo renombrar la nota porque no existe", None)
@@ -74,7 +73,7 @@ def move_to_theme(note_repo: NoteRepository,
     return OperationResult(True, "Tema de la nota actualizado", None)
 
 @handle_usecase_errors
-def update_note_content(note_repo: NoteRepository, note_id: int, content: str, user_id: int) -> OperationResult[None]:
+def update_note_content(note_repo: NoteRepository, note_id: int, user_id: int, content: str) -> OperationResult[None]:
     note = note_repo.get_by_id(note_id, user_id)
     if not note:
         return OperationResult(False, "No se pudo actualizar el contenido de la nota porque no existe", None)
@@ -102,7 +101,8 @@ def register_time_to_note(
 def get_unique_note_name(
                     theme_repo: ThemeRepository,
                     note_service: NoteService,
-                    name: str, user_id: int, theme_id: int | None = None) -> OperationResult[str]:
+                    user_id: int,
+                    name: str, theme_id: int | None = None) -> OperationResult[str]:
     if theme_id:
         theme = theme_repo.get_by_id(theme_id, user_id)
         if not theme:
@@ -111,13 +111,13 @@ def get_unique_note_name(
     return OperationResult(True, "", u_name)
 
 @handle_usecase_errors
-def get_note_ids_by_theme_hierarchy(theme_id: int, search_repo: SearchEfficiencyRepository) -> OperationResult[list[int]]:
-    ids_notes = search_repo.get_notes_from_theme_and_descendants(theme_id)
+def get_note_ids_by_theme_hierarchy(search_repo: SearchEfficiencyRepository, theme_id: int, user_id: int) -> OperationResult[list[int]]:
+    ids_notes = search_repo.get_notes_from_theme_and_descendants(theme_id, user_id)
     return OperationResult(True, "", ids_notes)
 
 @handle_usecase_errors
-def get_note_details(note_repo: NoteRepository, note_id: int) -> OperationResult[NoteDetailDTO]:
-    note = note_repo.get_by_id(note_id)
+def get_note_details(note_repo: NoteRepository, note_id: int, user_id: int) -> OperationResult[NoteDetailDTO]:
+    note = note_repo.get_by_id(note_id, user_id)
     if not note:
         return OperationResult(False, "No se pudo obtener los detalles de la nota porque no existe", None)
     
@@ -131,11 +131,11 @@ def get_note_details(note_repo: NoteRepository, note_id: int) -> OperationResult
     return OperationResult(True, "Nota traido correctamente", note_dto)
 
 @handle_usecase_errors
-def list_notes_by_theme(note_repo: NoteRepository, theme_repo: ThemeRepository, theme_id: int) -> OperationResult[list[NoteSummaryDTO]]:
-    theme = theme_repo.get_by_id(theme_id)
+def list_notes_by_theme(note_repo: NoteRepository, theme_repo: ThemeRepository, theme_id: int, user_id: int) -> OperationResult[list[NoteSummaryDTO]]:
+    theme = theme_repo.get_by_id(theme_id, user_id)
     if not theme:
-        return OperationResult(False, "No se pudo listar lo temas de la nota porque la nota dada no existe", None)
-    notes = note_repo.get_notes_by_theme_id(theme_id)
+        return OperationResult(False, "No se pudo listar las notas del tema porque el tema dado no existe", None)
+    notes = note_repo.get_notes_by_theme_id(theme_id, user_id)
     notes_dto = [NoteSummaryDTO(
             id=n.id,
             name = n.name
@@ -144,8 +144,8 @@ def list_notes_by_theme(note_repo: NoteRepository, theme_repo: ThemeRepository, 
     "listadas", notes_dto)
 
 @handle_usecase_errors
-def get_notes_without_themes(note_repo: NoteRepository) -> OperationResult[list[NoteSummaryDTO]]:
-    notes = note_repo.get_notes_without_theme_id()
+def get_notes_without_themes(note_repo: NoteRepository, user_id: int) -> OperationResult[list[NoteSummaryDTO]]:
+    notes = note_repo.get_notes_without_theme_id(user_id)
     notes_dto = [NoteSummaryDTO(
         id = n.id,
         name = n.name
@@ -156,9 +156,11 @@ def get_notes_without_themes(note_repo: NoteRepository) -> OperationResult[list[
 @handle_usecase_errors
 def get_note_analytics(note_repo: NoteRepository, 
                        analyzer_service: AnalyzerService,
-                       note_id: int) -> OperationResult[NoteAnalyticsDTO]:
+                       note_id: int,
+                       user_id: int
+                       ) -> OperationResult[NoteAnalyticsDTO]:
     
-    note = note_repo.get_by_id(note_id)
+    note = note_repo.get_by_id(note_id, user_id)
     if not note:
         return OperationResult(False, "No se pudo obtener las analiticas de la nota porque la nota dada es inexistente", None)
     

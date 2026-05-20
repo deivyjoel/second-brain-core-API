@@ -60,7 +60,7 @@ class BackendAPI:
         self._theme_service = ThemeService(self._theme_repo)
         self._image_service = ImageService(self._image_repo)
 
-    # --- User opetations ---
+    # --- User operations ---
     def login_user(self, email: str, password: str):
         return login_user(self._user_repo, email, password, self._user_service)
     
@@ -68,120 +68,119 @@ class BackendAPI:
         return register_user(self._user_repo, name, email, password, self._user_service)
     
     # --- Note operations ---
-    def create_note(self, name: str, user_id: int, theme_id: int | None = None):
-        return create_note(self._note_repo, user_id, self._note_service, name, theme_id)
+    def create_note(self, user_id: int, name: str, theme_id: int | None = None):
+        return create_note(self._note_repo, self._note_service, user_id, name, theme_id)
 
-    def delete_note(self, note_id: int):
-        return delete_note(self._note_repo, note_id)
+    def delete_note(self, note_id: int, user_id: int):
+        return delete_note(self._note_repo, note_id, user_id)
 
-    def delete_many_notes(self, note_ids: list[int]):
-        return delete_many_notes(self._note_repo, note_ids)
+    def delete_many_notes(self, user_id: int, note_ids: list[int]):
+        return delete_many_notes(self._note_repo, user_id, note_ids)
 
-    def rename_note(self, note_id: int, new_name: str):
-        return rename_note(self._note_repo, self._note_service, note_id, new_name)
+    def rename_note(self, note_id: int, user_id: int, new_name: str):
+        return rename_note(self._note_repo, self._note_service, note_id, user_id, new_name)
 
-    def move_note_to_theme(self, note_id: int, new_theme_id: int | None = None):
-        return move_to_theme(self._note_repo, self._theme_repo, self._note_service, note_id, new_theme_id)
+    def move_note_to_theme(self, note_id: int, user_id: int, new_theme_id: int | None = None):
+        return move_to_theme(self._note_repo, self._theme_repo, self._note_service, note_id, user_id, new_theme_id)
 
-    def update_note_content(self, note_id: int, content: str):
-        return update_note_content(self._note_repo, note_id, content)
+    def update_note_content(self, note_id: int, user_id: int, content: str):
+        return update_note_content(self._note_repo, note_id, user_id, content)
 
-    def get_note_details(self, note_id: int):
-        return get_note_details(self._note_repo, note_id)
+    def get_note_details(self, note_id: int, user_id: int):
+        return get_note_details(self._note_repo, note_id, user_id)
 
-    def get_note_analytics(self, note_id: int):
-        return get_note_analytics(self._note_repo, self._analyzer_service, note_id)
+    def get_note_analytics(self, note_id: int, user_id: int):
+        return get_note_analytics(self._note_repo, self._analyzer_service, note_id, user_id)
 
-    def list_notes_by_theme(self, theme_id: int):
-        return list_notes_by_theme(self._note_repo, self._theme_repo, theme_id)
+    def list_notes_by_theme(self, theme_id: int, user_id: int):
+        return list_notes_by_theme(self._note_repo, self._theme_repo, theme_id, user_id)
 
-    def get_notes_without_themes(self):
-        return get_notes_without_themes(self._note_repo)
+    def get_notes_without_themes(self, user_id: int):
+        return get_notes_without_themes(self._note_repo, user_id)
 
-    def register_time_to_note(self, note_id: int, minutes: float):
-        return register_time_to_note(self._note_repo, minutes, note_id)
+    def register_time_to_note(self, note_id: int, user_id: int, minutes: float):
+        return register_time_to_note(self._note_repo, minutes, note_id, user_id)
 
-    def get_unique_note_name(self, name: str, theme_id: int | None = None):
-        return get_unique_note_name(self._theme_repo, self._note_service, name, theme_id)
+    def get_unique_note_name(self, user_id: int, name: str, theme_id: int | None = None):
+        return get_unique_note_name(self._theme_repo, self._note_service, user_id, name, theme_id)
 
-    def get_note_ids_by_theme_hierarchy(self, theme_id: int):
-        return get_note_ids_by_theme_hierarchy(theme_id, self._search_repo)
+    def get_note_ids_by_theme_hierarchy(self, theme_id: int, user_id: int):
+        return get_note_ids_by_theme_hierarchy(self._search_repo, theme_id, user_id)
 
     # --- Theme operations ---
-    def create_theme(self, name: str, user_id: int, parent_id: int | None = None):
-        return create_theme(self._theme_repo, self._theme_service, name, user_id, parent_id)
+    def create_theme(self, user_id: int, name: str, parent_id: int | None = None):
+        return create_theme(self._theme_repo, self._theme_service, user_id, name, parent_id)
 
-    def delete_theme(self, theme_id: int):
-        return delete_theme(self._theme_repo, theme_id)
+    def delete_theme(self, theme_id: int, user_id: int):
+        return delete_theme(self._theme_repo, theme_id, user_id)
     
-    def delete_many_themes(self, theme_ids: list[int]):
-        return delete_many_themes(self._theme_repo, theme_ids)
+    def delete_many_themes(self, user_id: int, theme_ids: list[int]):
+        return delete_many_themes(self._theme_repo, user_id, theme_ids)
 
-    def rename_theme(self, theme_id: int, new_name: str):
-        return rename_theme(self._theme_repo, self._theme_service, theme_id, new_name)
+    def rename_theme(self, theme_id: int, user_id: int, new_name: str):
+        return rename_theme(self._theme_repo, self._theme_service, theme_id, user_id, new_name)
 
-    def remove_theme(self, theme_id: int, new_parent_id: int | None = None):
-        return remove_theme(self._theme_repo, self._theme_service, theme_id,
-                            self._search_repo, new_parent_id)
+    def move_theme(self, theme_id: int, user_id: int, new_parent_id: int | None = None):
+        return remove_theme(self._theme_repo, self._search_repo, self._theme_service, theme_id, user_id, new_parent_id)
 
-    def get_unique_theme_name(self, name: str, theme_id: int | None = None):
-        return get_unique_theme_name(self._theme_repo, self._theme_service, name, theme_id)
+    def get_unique_theme_name(self, user_id: int, name: str, theme_id: int | None = None):
+        return get_unique_theme_name(self._theme_repo, self._theme_service, user_id, name, theme_id)
 
-    def list_themes(self):
-        return list_themes(self._theme_repo)
+    def list_themes(self, user_id: int):
+        return list_themes(self._theme_repo, user_id)
 
-    def list_root_themes(self):
-        return list_root_themes(self._theme_repo)
+    def list_root_themes(self, user_id: int):
+        return list_root_themes(self._theme_repo, user_id)
 
-    def list_child_themes(self, parent_id: int):
-        return list_child_themes(self._theme_repo, parent_id)
+    def list_child_themes(self, parent_id: int, user_id: int):
+        return list_child_themes(self._theme_repo, user_id, parent_id)
 
-    def get_theme_details(self, theme_id: int):
-        return get_theme_details(self._theme_repo, theme_id)
+    def get_theme_details(self, theme_id: int, user_id: int):
+        return get_theme_details(self._theme_repo, theme_id, user_id)
 
-    def get_theme_analytics(self, theme_id: int):
+    def get_theme_analytics(self, theme_id: int, user_id: int):
         return get_theme_analytics(
             self._analy_repo,
             self._search_repo,
             self._theme_repo,
             self._analyzer_service,
-            theme_id
+            theme_id,
+            user_id
         )
 
-    def get_themes_descendants(self, theme_id: int):
-        return get_themes_descendants(theme_id, self._search_repo)
+    def get_themes_descendants(self, theme_id: int, user_id: int):
+        return get_themes_descendants(self._search_repo, theme_id, user_id)
     
-# --- Image operations ---
-    def create_image(self, name: str, user_id: int, blob_data: bytes, extension: str, theme_id: int | None = None):
+    # --- Image operations ---
+    def create_image(self, user_id: int, name: str, blob_data: bytes, extension: str, theme_id: int | None = None):
         return create_image(self._image_repo, self._image_service, user_id, name, blob_data, extension, theme_id)
 
-    def delete_image(self, image_id: int):
-        return delete_image(self._image_repo, image_id)
+    def delete_image(self, image_id: int, user_id: int):
+        return delete_image(self._image_repo, image_id, user_id)
 
-    def rename_image(self, image_id: int, new_name: str):
-        return rename_image(self._image_repo, self._image_service, image_id, new_name)
+    def delete_many_images(self, user_id: int, image_ids: list[int]):
+        return delete_many_images(self._image_repo, user_id, image_ids)
 
-    def move_image_to_theme(self, image_id: int, new_theme_id: int | None = None):
-        return move_image_to_theme(self._image_repo, self._theme_repo, self._image_service, image_id, new_theme_id)
+    def rename_image(self, image_id: int, user_id: int, new_name: str):
+        return rename_image(self._image_repo, self._image_service, image_id, user_id, new_name)
 
-    def get_image_details(self, image_id: int):
-        return get_image_details(self._image_repo, image_id)
+    def move_image_to_theme(self, image_id: int, user_id: int, new_theme_id: int | None = None):
+        return move_image_to_theme(self._image_repo, self._theme_repo, self._image_service, image_id, user_id, new_theme_id)
 
-    def list_images_by_theme(self, theme_id: int):
-        return list_images_by_theme(self._image_repo, theme_id)
+    def get_image_details(self, image_id: int, user_id: int):
+        return get_image_details(self._image_repo, image_id, user_id)
 
-    def get_images_without_theme(self):
-        return list_images_without_theme(self._image_repo)
+    def list_images_by_theme(self, theme_id: int, user_id: int):
+        return list_images_by_theme(self._image_repo, self._theme_repo, theme_id, user_id)
 
-    def get_unique_image_name(self, name: str, theme_id: int | None = None):
-        return get_unique_image_name(self._theme_repo, self._image_service, name, theme_id)
+    def get_images_without_theme(self, user_id: int):
+        return list_images_without_theme(self._image_repo, user_id)
+
+    def get_unique_image_name(self, user_id: int, name: str, theme_id: int | None = None):
+        return get_unique_image_name(self._theme_repo, self._image_service, user_id, name, theme_id)
+
+    def get_image_extension(self, image_id: int, user_id: int):
+        return get_image_extension(self._image_repo, image_id, user_id)
     
-    def delete_many_images(self, image_ids: list[int]):
-        return delete_many_images(self._image_repo, image_ids)
-
-    def get_image_extension(self, image_id: int):
-        return get_image_extension(self._image_repo, image_id)
-    
-    def get_image_ids_by_theme_hierarchy(self, image_id: int):
-        return get_image_ids_by_theme_hierarchy(image_id, self._search_repo)
-
+    def get_image_ids_by_theme_hierarchy(self, theme_id: int, user_id: int):
+        return get_image_ids_by_theme_hierarchy(self._search_repo, theme_id, user_id)

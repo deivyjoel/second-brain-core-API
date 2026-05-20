@@ -14,40 +14,41 @@ class ThemeRepository():
         self.session = session
         logger.info("ThemeRepository initialized succesfully: %s", session)
 
-    def _to_domain(self, obj: models.ThemeModel) -> Theme:
+    def _to_domain(self, theme: models.ThemeModel) -> Theme:
         """Converts database model to domain entity."""
         return Theme(
-            id = obj.id,
-            name = obj.name,
-            parent_id = obj.parent_id,
-            user_id = obj.user_id,
-            created_at = obj.created_at,
-            last_edited_at = obj.last_edited_at
+            id = theme.id,
+            user_id = theme.user_id,
+            name = theme.name,
+            parent_id = theme.parent_id,
+            created_at = theme.created_at,
+            last_edited_at = theme.last_edited_at
         )
     
     # --- CRUD ---
     def add(self, theme: NewThemeDTO) -> int:
         obj = models.ThemeModel(
+            user_id = theme.user_id,
             name=theme.name, 
-            parent_id=theme.parent_id,
-            user_id = theme.user_id
+            parent_id=theme.parent_id
+            
             )
         try:
             self.session.add(obj)
             self.session.commit()
-            logger.info("add_theme(id=%s) [Success]", obj.id)
+            logger.info("add_theme(id=%s, user_id=%s) [Success]", obj.id, obj.user_id)
             return obj.id
         except IntegrityError as e:
             self.session.rollback()
-            logger.exception("add_theme(name=%s) [IntegrityError - Possible duplicate]: %s", theme.name, e)
+            logger.exception("add_theme(name=%s, user_id=%s) [IntegrityError - Possible duplicate]: %s", theme.name, theme.user_id, e)
             raise UniqueConstraintViolation("unique_violation") from e
         except SQLAlchemyError as e:
             self.session.rollback()
-            logger.exception("add_theme(name=%s) [SQLAlchemyError]: %s", theme.name, e)
+            logger.exception("add_theme(name=%s, user_id=%s) [SQLAlchemyError]: %s", theme.name, theme.user_id, e)
             raise RepositoryError("db_error") from e
         except Exception as e:
             self.session.rollback()
-            logger.exception("add_theme(name=%s) [Unexpected error]", theme.name)
+            logger.exception("add_theme(name=%s, user_id=%s) [Unexpected error]", theme.name, theme.user_id)
             raise RepositoryError("unexpected_error") from e
         
     def delete(self, theme_id: int, user_id: int) -> None:
@@ -57,20 +58,20 @@ class ThemeRepository():
             models.ThemeModel.state == True
         ).first()
         if not theme_obj:
-            logger.warning("delete_theme(id=%s) [Not Found]", theme_id)
+            logger.warning("delete_theme(id=%s, user_id=%s) [Not Found]", theme_id, user_id)
             raise RepositoryError("not_found")
         theme_obj.state = False
 
         try:
             self.session.commit()
-            logger.info("delete_theme(id=%s) [Success]", theme_id)
+            logger.info("delete_theme(id=%s, user_id=%s) [Success]", theme_id, user_id)
         except SQLAlchemyError as e:
             self.session.rollback()
-            logger.exception("delete_theme(id=%s) [SQLAlchemyError]: %s", theme_id, e)
+            logger.exception("delete_theme(id=%s, user_id=%s) [SQLAlchemyError]: %s", theme_id, user_id, e)
             raise RepositoryError("db_error") from e
         except Exception as e:
             self.session.rollback()
-            logger.exception("delete_theme(id=%s) [Unexpected error]", theme_id)
+            logger.exception("delete_theme(id=%s, user_id=%s) [Unexpected error]", theme_id, user_id)
             raise RepositoryError("unexpected_error") from e
 
     def update(self, theme: Theme) -> None:
@@ -80,7 +81,7 @@ class ThemeRepository():
             models.ThemeModel.state == True
         ).first()
         if not theme_obj:
-            logger.warning("update_theme(id=%s) [Not Found]", theme._id)
+            logger.warning("update_theme(id=%s, user_id=%s) [Not Found]", theme._id, theme._user_id)
             raise RepositoryError("not_found")
 
         theme_obj.name = theme._name
@@ -89,18 +90,18 @@ class ThemeRepository():
 
         try:
             self.session.commit()
-            logger.info("update_theme(id=%s) [Success]", theme._id)
+            logger.info("update_theme(id=%s, user_id=%s) [Success]", theme._id, theme._user_id)
         except IntegrityError as e:
             self.session.rollback()
-            logger.exception("update_theme(id=%s) [IntegrityError]: %s", theme._id, e)
+            logger.exception("update_theme(id=%s, user_id=%s) [IntegrityError]: %s", theme._id, theme._user_id, e)
             raise UniqueConstraintViolation("unique_violation") from e
         except SQLAlchemyError as e:
             self.session.rollback()
-            logger.exception("update_theme(id=%s) [SQLAlchemyError]: %s", theme._id, e)
+            logger.exception("update_theme(id=%s, user_id=%s) [SQLAlchemyError]: %s", theme._id, theme._user_id, e)
             raise RepositoryError("db_error") from e
         except Exception as e:
             self.session.rollback()
-            logger.exception("update_theme(id=%s) [Unexpected error]", theme._id)
+            logger.exception("update_theme(id=%s, user_id=%s) [Unexpected error]", theme._id, theme._user_id)
             raise RepositoryError("unexpected_error") from e
 
     def delete_many(self, theme_ids: list[int], user_id: int) -> None:
@@ -117,14 +118,14 @@ class ThemeRepository():
             )
             self.session.execute(stmt)
             self.session.commit()
-            logger.info("delete_many_themes(ids=%s) [Success]", theme_ids)
+            logger.info("delete_many_themes(ids=%s, user_id=%s) [Success]", theme_ids, user_id)
         except SQLAlchemyError as e:
             self.session.rollback()
-            logger.exception("delete_many_themes [SQLAlchemyError]: %s", e)
+            logger.exception("delete_many_themes(user_id=%s) [SQLAlchemyError]: %s", user_id, e)
             raise RepositoryError("db_error") from e
         except Exception as e:
             self.session.rollback()
-            logger.exception("delete_many_themes [Unexpected error]")
+            logger.exception("delete_many_themes(user_id=%s) [Unexpected error]", user_id)
             raise RepositoryError("unexpected_error") from e
         
     # --- QUERIES ---
@@ -135,14 +136,14 @@ class ThemeRepository():
                 models.ThemeModel.user_id == user_id,
                 models.ThemeModel.state == True
             ).first()
-            logger.info("get_theme_by_id(id=%s) [Success]", theme_id)
+            logger.info("get_theme_by_id(id=%s, user_id=%s) [Success]", theme_id, user_id)
             return self._to_domain(obj) if obj else None
         except SQLAlchemyError as e:
-            logger.exception("get_theme_by_id(theme_id=%s) [SQLAlchemyError]: %s", theme_id, e)
+            logger.exception("get_theme_by_id(theme_id=%s, user_id=%s) [SQLAlchemyError]: %s", theme_id, user_id, e)
             raise RepositoryError("db_error") from e
         except Exception as e:
             self.session.rollback()
-            logger.exception("get_theme_by_id(theme_id=%s) [Unexpected error]", theme_id)
+            logger.exception("get_theme_by_id(theme_id=%s, user_id=%s) [Unexpected error]", theme_id, user_id)
             raise RepositoryError("unexpected_error") from e
         
     def _query_themes(self, **filters) -> list[Theme]:
