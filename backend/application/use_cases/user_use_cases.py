@@ -20,7 +20,7 @@ def login_user(user_repo: UserRepository,
     if not user:
         return OperationResult(False, "Credenciales inválidas", None)
     
-    if not user_service.verify_pasword(password, user._password):
+    if not user_service.verify_password(password, user._password):
         return OperationResult(False, "Credenciales inválidas", None)
 
     return OperationResult(True, "Usuario logueado correctamente", user._id)

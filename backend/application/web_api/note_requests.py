@@ -44,17 +44,17 @@ def create_note(body: CreateNoteRequest,
 def delete_note(note_id: int,
                 user_id: int = Depends(get_current_user),
                 api: BackendAPI = Depends(get_api)):
-    result = api.delete_note(note_id, user_id)  # ✅
+    result = api.delete_note(note_id, user_id) 
     if not result.successful:
         raise HTTPException(status_code=404, detail=result.info)
     return {"detail": result.info}
 
 
 @router.delete("/")
-def delete_many_notes(body: DeleteManyRequest,  # ✅ body en vez de list directo
+def delete_many_notes(body: DeleteManyRequest, 
                       user_id: int = Depends(get_current_user),
                       api: BackendAPI = Depends(get_api)):
-    result = api.delete_many_notes(user_id, body.note_ids)  # ✅
+    result = api.delete_many_notes(user_id, body.note_ids)  
     if not result.successful:
         raise HTTPException(status_code=400, detail=result.info)
     return {"detail": result.info}
@@ -65,7 +65,7 @@ def rename_note(note_id: int,
                 body: RenameNoteRequest,
                 user_id: int = Depends(get_current_user),
                 api: BackendAPI = Depends(get_api)):
-    result = api.rename_note(note_id, user_id, body.new_name)  # ✅
+    result = api.rename_note(note_id, user_id, body.new_name)  
     if not result.successful:
         raise HTTPException(status_code=400, detail=result.info)
     return {"detail": result.info}
@@ -76,7 +76,7 @@ def move_note_to_theme(note_id: int,
                        body: MoveNoteRequest,
                        user_id: int = Depends(get_current_user),
                        api: BackendAPI = Depends(get_api)):
-    result = api.move_note_to_theme(note_id, user_id, body.new_theme_id)  # ✅
+    result = api.move_note_to_theme(note_id, user_id, body.new_theme_id)  
     if not result.successful:
         raise HTTPException(status_code=400, detail=result.info)
     return {"detail": result.info}
@@ -87,7 +87,7 @@ def update_note_content(note_id: int,
                         body: UpdateNoteContentRequest,
                         user_id: int = Depends(get_current_user),
                         api: BackendAPI = Depends(get_api)):
-    result = api.update_note_content(note_id, user_id, body.content)  # ✅
+    result = api.update_note_content(note_id, user_id, body.content)  
     if not result.successful:
         raise HTTPException(status_code=400, detail=result.info)
     return {"detail": result.info}
@@ -98,7 +98,7 @@ def register_time_to_note(note_id: int,
                            body: RegisterTimeRequest,
                            user_id: int = Depends(get_current_user),
                            api: BackendAPI = Depends(get_api)):
-    result = api.register_time_to_note(note_id, user_id, body.minutes)  # ✅
+    result = api.register_time_to_note(note_id, user_id, body.minutes)  
     if not result.successful:
         raise HTTPException(status_code=400, detail=result.info)
     return {"detail": result.info}
@@ -107,7 +107,7 @@ def register_time_to_note(note_id: int,
 @router.get("/root/")
 def get_notes_without_themes(user_id: int = Depends(get_current_user),
                               api: BackendAPI = Depends(get_api)):
-    result = api.get_notes_without_themes(user_id)  # ✅
+    result = api.get_notes_without_themes(user_id)  
     if not result.successful:
         raise HTTPException(status_code=400, detail=result.info)
     return result.obj
@@ -118,7 +118,7 @@ def get_unique_note_name(name: str,
                          theme_id: int | None = None,
                          user_id: int = Depends(get_current_user),
                          api: BackendAPI = Depends(get_api)):
-    result = api.get_unique_note_name(user_id, name, theme_id)  # ✅
+    result = api.get_unique_note_name(user_id, name, theme_id)  
     if not result.successful:
         raise HTTPException(status_code=400, detail=result.info)
     return {"name": result.obj}
@@ -128,7 +128,7 @@ def get_unique_note_name(name: str,
 def list_notes_by_theme(theme_id: int,
                         user_id: int = Depends(get_current_user),
                         api: BackendAPI = Depends(get_api)):
-    result = api.list_notes_by_theme(theme_id, user_id)  # ✅
+    result = api.list_notes_by_theme(theme_id, user_id)  
     if not result.successful:
         raise HTTPException(status_code=404, detail=result.info)
     return result.obj
@@ -138,7 +138,7 @@ def list_notes_by_theme(theme_id: int,
 def get_note_ids_by_theme_hierarchy(theme_id: int,
                                     user_id: int = Depends(get_current_user),
                                     api: BackendAPI = Depends(get_api)):
-    result = api.get_note_ids_by_theme_hierarchy(theme_id, user_id)  # ✅
+    result = api.get_note_ids_by_theme_hierarchy(theme_id, user_id)  
     if not result.successful:
         raise HTTPException(status_code=400, detail=result.info)
     return {"ids": result.obj}
@@ -148,7 +148,7 @@ def get_note_ids_by_theme_hierarchy(theme_id: int,
 def get_note_analytics(note_id: int,
                        user_id: int = Depends(get_current_user),
                        api: BackendAPI = Depends(get_api)):
-    result = api.get_note_analytics(note_id, user_id)  # ✅
+    result = api.get_note_analytics(note_id, user_id)  
     if not result.successful:
         raise HTTPException(status_code=404, detail=result.info)
     return result.obj
@@ -158,7 +158,7 @@ def get_note_analytics(note_id: int,
 def get_note_details(note_id: int,
                      user_id: int = Depends(get_current_user),
                      api: BackendAPI = Depends(get_api)):
-    result = api.get_note_details(note_id, user_id)  # ✅
+    result = api.get_note_details(note_id, user_id)  
     if not result.successful:
         raise HTTPException(status_code=404, detail=result.info)
     return result.obj

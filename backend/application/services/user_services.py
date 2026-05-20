@@ -9,6 +9,6 @@ class UserService:
     def hash_password(self, password: str):
         return bcrypt.hash(password)
     
-    def verify_pasword(self, password, password_hash):
+    def verify_password(self, password, password_hash):
         return bcrypt.verify(password, password_hash)
 

@@ -28,17 +28,17 @@ class DeleteManyRequest(BaseModel):
 def create_theme(body: CreateThemeRequest,
                  user_id: int = Depends(get_current_user),
                  api: BackendAPI = Depends(get_api)):
-    result = api.create_theme(user_id, body.name, body.parent_id)  # ✅
+    result = api.create_theme(user_id, body.name, body.parent_id)  
     if not result.successful:
         raise HTTPException(status_code=400, detail=result.info)
     return {"id": result.obj}
 
 
 @router.delete("/")
-def delete_many_themes(body: DeleteManyRequest,  # ✅ schema Pydantic
+def delete_many_themes(body: DeleteManyRequest,  
                        user_id: int = Depends(get_current_user),
                        api: BackendAPI = Depends(get_api)):
-    result = api.delete_many_themes(user_id, body.theme_ids)  # ✅
+    result = api.delete_many_themes(user_id, body.theme_ids)  
     if not result.successful:
         raise HTTPException(status_code=400, detail=result.info)
     return {"detail": result.info}
@@ -48,7 +48,7 @@ def delete_many_themes(body: DeleteManyRequest,  # ✅ schema Pydantic
 def delete_theme(theme_id: int,
                  user_id: int = Depends(get_current_user),
                  api: BackendAPI = Depends(get_api)):
-    result = api.delete_theme(theme_id, user_id)  # ✅
+    result = api.delete_theme(theme_id, user_id)  
     if not result.successful:
         raise HTTPException(status_code=404, detail=result.info)
     return {"detail": result.info}
@@ -59,7 +59,7 @@ def rename_theme(theme_id: int,
                  body: RenameThemeRequest,
                  user_id: int = Depends(get_current_user),
                  api: BackendAPI = Depends(get_api)):
-    result = api.rename_theme(theme_id, user_id, body.new_name)  # ✅
+    result = api.rename_theme(theme_id, user_id, body.new_name)  
     if not result.successful:
         raise HTTPException(status_code=400, detail=result.info)
     return {"detail": result.info}
@@ -70,7 +70,7 @@ def move_theme(theme_id: int,
                body: MoveThemeRequest,
                user_id: int = Depends(get_current_user),
                api: BackendAPI = Depends(get_api)):
-    result = api.move_theme(theme_id, user_id, body.new_parent_id)  # ✅
+    result = api.move_theme(theme_id, user_id, body.new_parent_id)  
     if not result.successful:
         raise HTTPException(status_code=400, detail=result.info)
     return {"detail": result.info}
@@ -79,7 +79,7 @@ def move_theme(theme_id: int,
 @router.get("/root/")
 def list_root_themes(user_id: int = Depends(get_current_user),
                      api: BackendAPI = Depends(get_api)):
-    result = api.list_root_themes(user_id)  # ✅
+    result = api.list_root_themes(user_id)  
     if not result.successful:
         raise HTTPException(status_code=400, detail=result.info)
     return result.obj
@@ -90,7 +90,7 @@ def get_unique_theme_name(name: str,
                           theme_id: int | None = None,
                           user_id: int = Depends(get_current_user),
                           api: BackendAPI = Depends(get_api)):
-    result = api.get_unique_theme_name(user_id, name, theme_id)  # ✅
+    result = api.get_unique_theme_name(user_id, name, theme_id)  
     if not result.successful:
         raise HTTPException(status_code=400, detail=result.info)
     return {"name": result.obj}
@@ -99,7 +99,7 @@ def get_unique_theme_name(name: str,
 @router.get("/")
 def list_themes(user_id: int = Depends(get_current_user),
                 api: BackendAPI = Depends(get_api)):
-    result = api.list_themes(user_id)  # ✅
+    result = api.list_themes(user_id)  
     if not result.successful:
         raise HTTPException(status_code=400, detail=result.info)
     return result.obj
@@ -109,7 +109,7 @@ def list_themes(user_id: int = Depends(get_current_user),
 def get_theme_analytics(theme_id: int,
                         user_id: int = Depends(get_current_user),
                         api: BackendAPI = Depends(get_api)):
-    result = api.get_theme_analytics(theme_id, user_id)  # ✅
+    result = api.get_theme_analytics(theme_id, user_id)  
     if not result.successful:
         raise HTTPException(status_code=404, detail=result.info)
     return result.obj
@@ -119,7 +119,7 @@ def get_theme_analytics(theme_id: int,
 def get_themes_descendants(theme_id: int,
                            user_id: int = Depends(get_current_user),
                            api: BackendAPI = Depends(get_api)):
-    result = api.get_themes_descendants(theme_id, user_id)  # ✅
+    result = api.get_themes_descendants(theme_id, user_id)  
     if not result.successful:
         raise HTTPException(status_code=404, detail=result.info)
     return {"ids": result.obj}
@@ -129,7 +129,7 @@ def get_themes_descendants(theme_id: int,
 def list_child_themes(theme_id: int,
                       user_id: int = Depends(get_current_user),
                       api: BackendAPI = Depends(get_api)):
-    result = api.list_child_themes(theme_id, user_id)  # ✅
+    result = api.list_child_themes(theme_id, user_id)  
     if not result.successful:
         raise HTTPException(status_code=404, detail=result.info)
     return result.obj
@@ -139,7 +139,7 @@ def list_child_themes(theme_id: int,
 def get_theme_details(theme_id: int,
                       user_id: int = Depends(get_current_user),
                       api: BackendAPI = Depends(get_api)):
-    result = api.get_theme_details(theme_id, user_id)  # ✅
+    result = api.get_theme_details(theme_id, user_id)  
     if not result.successful:
         raise HTTPException(status_code=404, detail=result.info)
     return result.obj

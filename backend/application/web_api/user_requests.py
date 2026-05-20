@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from jose import jwt
 import os
 
+from datetime import datetime, timedelta
 from backend.application.backend_api import BackendAPI
 from backend.infrastructure.dependencies import get_api, get_current_user
 
@@ -41,7 +42,10 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(),
     if not SECRET_KEY:
         raise RuntimeError("SECRET_KEY no está definida en las variables de entorno")
     
-    token = jwt.encode({"user_id": result.obj}, SECRET_KEY, algorithm="HS256")
+    token = jwt.encode({
+        "user_id": result.obj,
+        "exp": datetime.utcnow() + timedelta(days=7) # expira en 7 días
+        }, SECRET_KEY, algorithm="HS256")
     return {"access_token": token, "token_type": "bearer"}
 
 
